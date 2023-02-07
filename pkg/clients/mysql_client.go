@@ -83,15 +83,27 @@ func (u *User) FindUserByID(uid uint32) (*User, error) {
 	return u, err
 }
 
+func (u *User) FindUserByEmail(email string) (*User, error) {
+	var err error
+	err = db.Debug().Model(User{}).Where("email = ?", email).Take(&u).Error
+	if err != nil {
+		return &User{}, err
+	}
+	if gorm.IsRecordNotFoundError(err) {
+		return &User{}, errors.New("Email Not Found")
+	}
+	return u, err
+}
+
 func (u *User) UpdateAUser(uid uint32) (*User, error) {
 
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
-			"password":  u.Password,
-			"full_name": u.FullName,
-			"user_name": u.UserName,
-			"email":     u.Email,
-			"update_at": time.Now(),
+			"password":   u.Password,
+			"full_name":  u.FullName,
+			"user_name":  u.UserName,
+			"email":      u.Email,
+			"updated_at": time.Now(),
 		},
 	)
 	if db.Error != nil {

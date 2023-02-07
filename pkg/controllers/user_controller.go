@@ -35,6 +35,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
+	hashedPas, err := common.BeforeSave(user.Password)
+	if err != nil {
+		log.Fatal(err)
+	}
+	user.Password = hashedPas
 	userCreated, err := user.SaveUser()
 
 	if err != nil {

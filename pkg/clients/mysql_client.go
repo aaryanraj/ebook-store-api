@@ -7,7 +7,6 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/aaryanraj/ebook-store-api/pkg/common"
 	"github.com/aaryanraj/ebook-store-api/pkg/config"
 	"github.com/aaryanraj/ebook-store-api/pkg/models"
 )
@@ -20,7 +19,10 @@ type User models.User
 func init() {
 	config.Connect()
 	db = config.GetDB()
-	db.AutoMigrate(&Book{})
+	err := db.Debug().AutoMigrate(&Book{}, &User{}).Error
+	if err != nil {
+		log.Fatalf("cannot migrate table: %v", err)
+	}
 }
 
 func (b *Book) CreateBook() *Book {
@@ -49,7 +51,7 @@ func DeleteBook(ID int64) (Book, *gorm.DB) {
 
 // 05/02/2023 code for user login
 
-func (u *User) SaveUser(db *gorm.DB) (*User, error) {
+func (u *User) SaveUser() (*User, error) {
 
 	var err error
 	err = db.Debug().Create(&u).Error
@@ -59,7 +61,7 @@ func (u *User) SaveUser(db *gorm.DB) (*User, error) {
 	return u, nil
 }
 
-func (u *User) FindAllUsers(db *gorm.DB) (*[]User, error) {
+func (u *User) FindAllUsers() (*[]User, error) {
 	var err error
 	users := []User{}
 	err = db.Debug().Model(&User{}).Limit(100).Find(&users).Error
@@ -69,7 +71,7 @@ func (u *User) FindAllUsers(db *gorm.DB) (*[]User, error) {
 	return &users, err
 }
 
-func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
+func (u *User) FindUserByID(uid uint32) (*User, error) {
 	var err error
 	err = db.Debug().Model(User{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
@@ -81,16 +83,11 @@ func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
 	return u, err
 }
 
-func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
+func (u *User) UpdateAUser(uid uint32) (*User, error) {
 
-	// To hash the password
-	hashedPas, err := common.BeforeSave(u.Password)
-	if err != nil {
-		log.Fatal(err)
-	}
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
-			"password":  hashedPas,
+			"password":  u.Password,
 			"full_name": u.FullName,
 			"user_name": u.UserName,
 			"email":     u.Email,
@@ -101,14 +98,14 @@ func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 		return &User{}, db.Error
 	}
 	// This is the display the updated user
-	err = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&u).Error
+	err := db.Debug().Model(&User{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
 		return &User{}, err
 	}
 	return u, nil
 }
 
-func (u *User) DeleteAUser(db *gorm.DB, uid uint32) (int64, error) {
+func (u *User) DeleteAUser(uid uint32) (int64, error) {
 
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).Delete(&User{})
 

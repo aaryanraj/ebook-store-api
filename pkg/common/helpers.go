@@ -4,15 +4,12 @@ import (
 	"errors"
 	"html"
 	"strings"
-	"time"
 
 	"github.com/badoux/checkmail"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/aaryanraj/ebook-store-api/pkg/models"
+	"github.com/aaryanraj/ebook-store-api/pkg/clients"
 )
-
-type User models.User
 
 func Hash(password string) ([]byte, error) {
 	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -31,16 +28,13 @@ func BeforeSave(pas string) (string, error) {
 	return password, nil
 }
 
-func (u *User) Prepare() {
-	u.ID = 0
+func Prepare(u *clients.User) {
 	u.FullName = html.EscapeString(strings.TrimSpace(u.FullName))
 	u.UserName = html.EscapeString(strings.TrimSpace(u.UserName))
 	u.Email = html.EscapeString(strings.TrimSpace(u.Email))
-	u.CreatedAt = time.Now()
-	u.UpdatedAt = time.Now()
 }
 
-func (u *User) Validate(action string) error {
+func Validate(u *clients.User, action string) error {
 	switch strings.ToLower(action) {
 	case "update":
 		if u.FullName == "" {

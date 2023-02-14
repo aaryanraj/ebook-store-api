@@ -28,7 +28,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	responses.JSON(w, http.StatusOK, token)
 }
 

@@ -65,13 +65,9 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 func GetUser(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-	uid, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, err)
-		return
-	}
+	email := vars["id"]
 	user := clients.User{}
-	foundUser, err := user.FindUserByID(uint32(uid))
+	foundUser, err := user.FindUserByEmail(email)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
